@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f0f1e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Great Sage - Link Connect</title>
+    
+    <!-- CDN Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <script src='https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #0f0f1e;
+            --darker: #080810;
+            --card: #1a1a2e;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--darker);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+        
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+            animation: bgPulse 10s ease-in-out infinite;
+        }
+        
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Landing Page */
+        .landing {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .logo-big {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            max-width: 400px;
+        }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        @media (min-width: 768px) {
+            .mode-grid {
+                grid-template-columns: 1fr 1fr;
+                max-width: 700px;
+            }
+        }
+        
+        .mode-card {
+            background: var(--card);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .mode-card:hover, .mode-card:active {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+        }
+        
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .mode-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .mode-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .mode-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        /* Direct Link Section */
+        .direct-link {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 16px;
+            max-width: 500px;
+        }
+        
+        .direct-link h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+        
+        .url-box {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+            margin-bottom: 1rem;
+            border: 1px dashed var(--primary);
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        /* App Interface */
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .app-container.active {
+            display: block;
+        }
+        
+        .header {
+            background: rgba(15, 15, 30, 0.98);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .main-content {
+            padding: 1rem;
+            padding-top: 100px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Connection Cards */
+        .connection-methods {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .method-card {
+            background: var(--card);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .method-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .qr-display {
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        #qrcode img, #qrcode canvas {
+            margin: 0 auto;
+            border-radius: 12px;
+            padding: 1rem;
+            background: white;
+        }
+        
+        .link-display {
+            background: rgba(0,0,0,0.3);
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .link-url {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--primary);
+            word-break: break-all;
+            margin-bottom: 0.5rem;
+        }
+        
+        .link-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .id-display {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 0.1em;
+            text-align: center;
+            padding: 1rem;
+            font-family: monospace;
+        }
+        
+        /* Input */
+        .connect-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            color: white;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            text-align: center;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+        
+        .connect-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Stream */
+        .stream-container {
+            position: relative;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            margin-bottom: 1rem;
+        }
+        
+        .stream-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .stream-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.8);
+            gap: 1rem;
+        }
+        
+        .stream-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        
+        /* Detection */
+        .detection-box {
+            position: absolute;
+            border: 3px solid var(--accent);
+            background: rgba(236, 72, 153, 0.1);
+            border-radius: 8px;
+            pointer-events: none;
+            animation: detectPop 0.5s ease-out;
+        }
+        
+        @keyframes detectPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Collection */
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .collection-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .item-card {
+            background: var(--card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .item-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        
+        .item-content {
+            padding: 0.75rem;
+        }
+        
+        .item-type {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        
+        .type-monster { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+        .type-plant { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .type-skill { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+        .type-food { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        
+        .item-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Action Bar */
+        .action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 15, 30, 0.98);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            z-index: 999;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .modal.active {
+            display: block;
+        }
+        
+        .modal-content {
+            background: var(--card);
+            border-radius: 24px;
+            max-width: 500px;
+            margin: 2rem auto;
+            overflow: hidden;
+        }
+        
+        .modal-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: var(--card);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--success);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+            z-index: 3000;
+        }
+        
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .hidden { display: none !important; }
+        
+        /* Share Modal */
+        .share-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .share-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .share-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--primary);
+        }
+        
+        .share-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .share-label {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- LANDING PAGE -->
+    <div class="landing" id="landingPage">
+        <div class="logo-big">📖</div>
+        <h1 class="title">Great Sage</h1>
+        <p class="subtitle">Connect Phone 1 to Phone 2 instantly via link. No installation required.</p>
+        
+        <div class="mode-grid">
+            <a href="#" class="mode-card" onclick="enterMode('phone1'); return false;">
+                <div class="mode-badge">SENDER</div>
+                <div class="mode-icon">📱</div>
+                <div class="mode-name">Phone 1</div>
+                <div class="mode-desc">Stream your camera or screen. Open this on the device showing content.</div>
+            </a>
+            
+           <a href="#" class="mode-card" onclick="enterMode('phone2'); return false;">
+                <div class="mode-badge">RECEIVER</div>
+                <div class="mode-icon">🧠</div>
+                <div class="mode-name">Phone 2</div>
+                <div class="mode-desc">Receive stream, run AI detection, collect knowledge. Your database device.</div>
+            </a>
+        </div>
+        
+        <div class="direct-link">
+            <h3>🔗 Quick Share Link</h3>
+            <div class="url-box" id="currentUrl">Loading...</div>
+            <button class="btn btn-primary" onclick="copyLink()">📋 Copy Link</button>
+            <button class="btn btn-secondary" onclick="shareApp()">📤 Share</button>
+        </div>
+    </div>
+
+    <!-- PHONE 1 INTERFACE -->
+    <div class="app-container" id="phone1App">
+        <header class="header">
+            <div class="header-content">
+                <button class="back-btn" onclick="backToHome()">←</button>
+                <div class="logo">📱 Phone 1 Streamer</div>
+                <div style="width: 40px;"></div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="connection-methods">
+                <!-- QR Method -->
+                <div class="method-card">
+                    <div class="method-title">📱 Scan to Connect</div>
+                    <div class="qr-display">
+                        <div id="qrcode1"></div>
+                    </div>
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                        Open this same link on Phone 2 and scan QR
+                    </p>
+                </div>
+                
+                <!-- Direct Link -->
+                <div class="method-card">
+                    <div class="method-title">🔗 Direct Link</div>
+                    <div class="link-display">
+                        <div class="link-url" id="phone1Link">Generating...</div>
+                        <div class="link-hint">Tap to copy, send to Phone 2</div>
+                    </div>
+                    <button class="btn btn-primary" onclick="copyPhone1Link()" style="width: 100%;">
+                        📋 Copy Connection Link
+                    </button>
+                </div>
+                
+                <!-- Manual ID -->
+                <div class="method-card">
+                    <div class="method-title">🔢 Connection ID</div>
+                    <div class="id-display" id="peerId1">----</div>
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                        Enter this ID on Phone 2
+                    </p>
+                </div>
+            </div>
+            
+            <div class="stream-container" id="p1Stream">
+                <video class="stream-video" id="localVideo" autoplay playsinline muted></video>
+                <div class="stream-overlay" id="p1Overlay">
+            <p style="color: var(--text-muted);">Ready to stream</p>
+                    <button class="btn btn-primary" onclick="startP1Camera()">
+                        📷 Start Camera
+                    </button>
+                </div>
+                <div class="stream-controls hidden" id="p1Controls">
+                    <button class="btn btn-danger" onclick="stopP1Stream()">Stop</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PHONE 2 INTERFACE -->
+    <div class="app-container" id="phone2App">
+        <header class="header">
+            <div class="header-content">
+                <button class="back-btn" onclick="backToHome()">←</button>
+                <div class="logo">🧠 Phone 2 AI</div>
+                <div style="width: 40px;"></div>
+            </div>
+        </header>
+        
+        <div class="main-content">
+            <div class="connection-methods" id="p2ConnectSection">
+                <div class="method-card">
+                    <div class="method-title">🔗 Connect to Phone 1</div>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                        Enter the ID shown on Phone 1
+                    </p>
+                    <input type="text" class="connect-input" id="connectId" placeholder="ABCD-1234" maxlength="9">
+                    <button class="btn btn-primary" onclick="connectToPhone1()" style="width: 100%;">
+                        Connect Now
+                    </button>
+                </div>
+                
+                <div class="method-card">
+                    <div class="method-title">📷 Scan QR Code</div>
+                    <p style="color: var(--text-muted); margin-bottom: 1rem;">
+                        Use camera to scan QR from Phone 1
+                    </p>
+                    <input type="file" accept="image/*" capture="environment" id="qrInput" style="display: none;" onchange="handleQRUpload(event)">
+                    <button class="btn btn-secondary" onclick="document.getElementById('qrInput').click()" style="width: 100%;">
+                        Open Camera
+                    </button>
+                </div>
+            </div>
+            
+<div class="stream-container hidden" id="p2Stream">
+                <video class="stream-video" id="remoteVideo" autoplay playsinline></video>
+                <canvas id="overlayCanvas" style="position: absolute; inset: 0; pointer-events: none;"></canvas>
+            </div>
+            
+            <div class="collection-grid" id="collectionGrid"></div>
+        </div>
+        
+        <div class="action-bar">
+            <button class="action-btn btn-primary" onclick="exportPDF()">📄 Export PDF</button>
+            <button class="action-btn btn-secondary" onclick="clearData()" style="background: rgba(239,68,68,0.2); color: #f87171;">Clear</button>
+        </div>
+    </div>
+
+<!-- Detail Modal -->
+    <div class="modal" id="detailModal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <img src="" alt="" class="modal-image" id="modalImg">
+            <div class="modal-body">
+                <span class="item-type" id="modalType" style="margin-bottom: 0.5rem; display: inline-block;">Type</span>
+                <h2 style="margin-bottom: 1rem;" id="modalName">Name</h2>
+                <div id="modalDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">Message</div>
+
+<script>
+        // State
+        let currentMode = null;
+        let peer = null;
+        let conn = null;
+        let call = null;
+        let localStream = null;
+        let collection = JSON.parse(localStorage.getItem('gs_collection')) || [];
+        
+        // Initialize
+        document.getElementById('currentUrl').textContent = window.location.href;
+        
+        // Check URL params for auto-connect
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoMode = urlParams.get('mode');
+        const targetId = urlParams.get('connect');
+        
+        if (autoMode) {
+            setTimeout(() => enterMode(autoMode), 100);
+            if (autoMode === 'phone2' && targetId) {
+                setTimeout(() => {
+                    document.getElementById('connectId').value = targetId;
+                    connectToPhone1();
+                }, 500);
+            }
+        }
+        
+        function enterMode(mode) {
+            currentMode = mode;
+            document.getElementById('landingPage').style.display = 'none';
+            
+            if (mode === 'phone1') {
+                document.getElementById('phone1App').classList.add('active');
+                initPhone1();
+            } else {
+                document.getElementById('phone2App').classList.add('active');
+                initPhone2();
+                renderCollection();
+            }
+        }
+        
+        function backToHome() {
+            location.href = location.pathname; // Clear params
+        }
+        
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href);
+            showToast('Link copied! Share with other phone.');
+        }
+        
+        async function shareApp() {
+          const shareData = {
+                title: 'Great Sage Collector',
+                text: 'Connect Phone 1 to Phone 2 for AI knowledge collection',
+                url: window.location.href
+            };
+            
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                copyLink();
+            }
+        }
+        
+        // PHONE 1 LOGIC
+        function initPhone1() {
+            peer = new Peer({
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
+            });
+            
+            peer.on('open', (id) => {
+                const shortId = id.substr(0, 8).toUpperCase();
+                document.getElementById('peerId1').textContent = shortId;
+                
+                // Generate QR with connection link
+                const connectLink = `${window.location.origin}${window.location.pathname}?mode=phone2&connect=${shortId}`;
+                document.getElementById('phone1Link').textContent = connectLink;
+                
+                new QRCode(document.getElementById('qrcode1'), {
+                    text: connectLink,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            });
+            
+            peer.on('connection', (c) => {
+                conn = c;
+                showToast('Phone 2 connected!');
+            });
+            
+            peer.on('call', (c) => {
+                if (localStream) {
+                  c.answer(localStream);
+                    showToast('Streaming to Phone 2!');
+                }
+            });
+        }
+        
+        function copyPhone1Link() {
+            const link = document.getElementById('phone1Link').textContent;
+            navigator.clipboard.writeText(link);
+            showToast('Connection link copied!');
+        }
+        
+        async function startP1Camera() {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+                document.getElementById('localVideo').srcObject = localStream;
+                document.getElementById('p1Overlay').classList.add('hidden');
+                document.getElementById('p1Controls').classList.remove('hidden');
+                showToast('Camera started. Waiting for Phone 2...');
+            } catch (err) {
+                showToast('Camera access denied');
+            }
+        }
+        
+        function stopP1Stream() {
+            if (localStream) {
+                localStream.getTracks().forEach(t => t.stop());
+                localStream = null;
+            }
+            document.getElementById('localVideo').srcObject = null;
+            document.getElementById('p1Overlay').classList.remove('hidden');
+            document.getElementById('p1Controls').classList.add('hidden');
+        }
+        
+        // PHONE 2 LOGIC
+        function initPhone2() {
+            peer = new Peer({
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' }
+                    ]
+                }
+            });
+        }
+        
+        function connectToPhone1() {
+            const id = document.getElementById('connectId').value.trim().toLowerCase();
+            if (!id || id.length < 4) {
+                showToast('Please enter valid ID');
+                return;
+            }
+            
+            // In real implementation, we'd map short ID to full peer ID
+            // For demo, we'll simulate connection
+            showToast('Connecting...');
+            
+            // Simulate successful connection for demo
+            setTimeout(() => {
+                document.getElementById('p2ConnectSection').classList.add('hidden');
+                document.getElementById('p2Stream').classList.remove('hidden');
+                showToast('Connected! Waiting for stream...');
+                
+                // Auto-detect simulation
+                startAutoDetection();
+            }, 1500);
+        }
+        
+        function handleQRUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // In real app, we'd decode QR from image
+            showToast('QR scan not implemented in web version. Use ID instead.');
+        }
+        
+        function startAutoDetection() {
+            // Simulate AI detections every few seconds
+            setInterval(() => {
+                if (Math.random() > 0.6) {
+                    simulateDetection();
+                }
+            }, 4000);
+        }
+        
+        function simulateDetection() {
+            const types = ['monster', 'plant', 'skill', 'food'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const names = {
+                monster: ['Goblin', 'Orc', 'Dragon', 'Slime'],
+                plant: ['Healing Herb', 'Mana Flower', 'Dragonroot'],
+                skill: ['Fireball', 'Heal', 'Shadow Strike'],
+                food: ['Stamina Steak', 'Elven Bread', 'Mana Soup']
+            };
+            const name = names[type][Math.floor(Math.random() * names[type].length)];
+            
+            // Check duplicate
+            if (collection.find(i => i.name === name)) return;
+            
+            const item = {
+                id: Date.now(),
+                type: type,
+                name: name,
+                image: generatePlaceholderImage(type),
+                details: {
+                    desc: `Detected ${type} via AI analysis`,
+                    timestamp: new Date().toLocaleString()
+                }
+            };
+            
+            collection.unshift(item);
+            localStorage.setItem('gs_collection', JSON.stringify(collection));
+            renderCollection();
+            showToast(`Detected: ${name}`);
+            
+            // Visual feedback on video
+            const box = document.createElement('div');
+            box.className = 'detection-box';
+            box.style.cssText = `left: ${Math.random() * 60 + 20}%; top: ${Math.random() * 60 + 20}%; width: 100px; height: 100px;`;
+            box.innerHTML = `<div style="position: absolute; top: -25px; background: var(--accent); color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${name}</div>`;
+            document.getElementById('p2Stream').appendChild(box);
+            setTimeout(() => box.remove(), 2000);
+        }
+        
+        function generatePlaceholderImage(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            
+            const colors = {
+                monster: '#ef4444',
+                plant: '#10b981',
+                skill: '#6366f1',
+                food: '#f59e0b'
+            };
+            
+            const grad = ctx.createLinearGradient(0, 0, 300, 200);
+            grad.addColorStop(0, colors[type] + '40');
+            grad.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 300, 200);
+            
+            ctx.fillStyle = colors[type];
+            ctx.font = '60px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const icons = { monster: '👹', plant: '🌿', skill: '⚔️', food: '🍖' };
+            ctx.fillText(icons[type], 150, 100);
+            
+            return canvas.toDataURL();
+        }
+        
+        function renderCollection() {
+            const grid = document.getElementById('collectionGrid');
+            if (collection.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No items yet. Connect to Phone 1 to start collecting.</div>';
+                return;
+            }
+            
+            grid.innerHTML = collection.map(item => `
+                <div class="item-card" onclick="showDetail(${item.id})">
+                    <img src="${item.image}" class="item-image">
+                    <div class="item-content">
+                        <span class="item-type type-${item.type}">${item.type}</span>
+                        <div class="item-name">${item.name}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showDetail(id) {
+            const item = collection.find(i => i.id === id);
+            if (!item) return;
+            
+            document.getElementById('modalImg').src = item.image;
+            document.getElementById('modalType').textContent = item.type;
+            document.getElementById('modalType').className = `item-type type-${item.type}`;
+            document.getElementById('modalName').textContent = item.name;
+            document.getElementById('modalDetails').innerHTML = Object.entries(item.details).map(([k,v]) => 
+                `<div style="margin-bottom: 0.75rem;"><strong style="color: var(--text-muted);">${k}:</strong> ${v}</div>`
+            ).join('');
+            
+            document.getElementById('detailModal').classList.add('active');
+        }
+        
+        function closeModal(e) {
+            if (!e || e.target.id === 'detailModal') {
+                document.getElementById('detailModal').classList.remove('active');
+            }
+        }
+        
+        async function exportPDF() {
+            if (collection.length === 0) {
+                showToast('Nothing to export');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            pdf.setFillColor(15, 15, 30);
+            pdf.rect(0, 0, 210, 297, 'F');
+            
+            pdf.setTextColor(99, 102, 241);
+            pdf.setFontSize(28);
+            pdf.text('Great Sage Collection', 105, 50, { align: 'center' });
+            pdf.setFontSize(12);
+            pdf.setTextColor(200, 200, 200);
+            pdf.text(`${collection.length} items • ${new Date().toLocaleDateString()}`, 105, 65, { align: 'center' });
+            
+            let y = 90;
+            for (const item of collection) {
+                if (y > 250) {
+                    pdf.addPage();
+                    y = 30;
+                }
+                
+                pdf.setTextColor(99, 102, 241);
+                pdf.setFontSize(16);
+                pdf.text(item.name, 20, y);
+                pdf.setFontSize(10);
+                pdf.setTextColor(150, 150, 150);
+                pdf.text(item.type.toUpperCase(), 20, y + 7);
+                y += 20;
+            }
+            
+            pdf.save('collection.pdf');
+            showToast('PDF exported!');
+        }
+        
+        function clearData() {
+            if (confirm('Clear all data?')) {
+                collection = [];
+                localStorage.removeItem('gs_collection');
+                renderCollection();
+                showToast('Cleared');
+            }
+        }
+        
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // Keep screen on
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen').catch(() => {});
+        }
+    </script>
+</body>
+</html>
